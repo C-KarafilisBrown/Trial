@@ -1,0 +1,115 @@
+---
+title: "01_02_read_in"
+author: "Chloe Karafilis-Brown"
+date: "2025-05-13"
+output: html_document
+ editor_options:
+   #This here should make it so all output appears in the R console, not inline which is a pain. You can also change it by ticking the right option in the gears symbol above
+   chunk_output_type: console
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(geomorph)
+library(Morpho)
+library(rgl)
+library(RRPP)
+library (Rvcg)
+
+#A little hack so we always automatically navigate to the right folder: 
+
+library(rstudioapi) # Safely Access the RStudio API
+
+setwd(dirname(getActiveDocumentContext()$path))
+
+```
+
+
+```{r shape data}
+# Make a file.list & empty 3D array
+devil_filelist<-list.files(path="Coordinates/lm_batch_10.1",pattern="*.txt", full.names = TRUE) 
+
+devil_rawcoords<-array(data=NA,dim=c(108,3,length(devil_filelist)))
+
+#Read in shape data
+for(i in 1:length(devil_filelist)){
+  devil_rawcoords[,,i] <- read.morphologika(file = devil_filelist[i])} 
+dim(devil_rawcoords) 
+devil_rawcoords
+
+
+### Rename landmark data files to matching specimen ID
+# Extract names of species from Flielist
+devil_specnames <- list.files(path="Coordinates/lm_batch_10.1", pattern="*.txt", full.names = FALSE)
+
+#Remove LM_ from the filenames
+devil_specnames <- gsub("^LM_", "", devil_specnames) 
+
+#Rename the 3rd dimension of the array to the specimen name 
+dimnames(devil_rawcoords)[[3]] <- devil_specnames
+
+
+# Pulls only the first element of the split
+dim(devil_rawcoords)  # 108, 3, 10
+devil_rawcoords
+
+```
+
+```{r check raw vs mesh}
+
+Sam_m1948 <- vcgPlyRead("Decimated_PLYs/Sarcophilus_harrisii_SAM_m1948.ply")
+
+shade3d(Sam_m1948, col="hotpink")
+spheres3d (devil_rawcoords[,,1], col="green")
+
+#colour scheme for you to play with :-)!
+
+```
+
+```{r GPA}
+#Perform GPA
+devil_gpa <- gpagen(devil_rawcoords, PrinAxes = FALSE)
+ 
+
+# Plot all specimens
+plotAllSpecimens(devil_gpa$coords)
+
+# Plot all specimens with mean shape and custom parameters
+plotAllSpecimens(devil_gpa$coords,mean=TRUE,
+                 plot_param=list(pt.bg="blue",pt.cex=0.2,link.col="yellow"))
+
+```
+
+```{r Mean shape}
+devil_consensusshape <-mshape(devil_gpa$coords) 
+#Meanspec needs gpa'ed coords, not raw coords. Here we're assigning just the number of the specimen to devil_meanspec, not the coordinates
+devil_meanspec <- findMeanSpec(devil_gpa$coords) 
+#Plot consensus vs mean shape: 
+plotRefToTarget(devil_consensusshape, devil_gpa$coords[,,devil_meanspec], method=c("vector"), mag=1, ptsize=1, label=FALSE)
+
+```
+
+```{r PCA}
+#Perform PCA
+devil_pca <- gm.prcomp(devil_gpa$coords)
+
+plot(devil_pca)
+#Plot PCA with labels
+plot(devil_pca$x[, 1], devil_pca$x[, 2], xlab = "PC1", ylab = "PC2", main = "PCA of Procrustes Landmarks")
+text(devil_pca$x[, 1], devil_pca$x[, 2], labels = dimnames(devil_gpa$coords)[[3]], pos = 2, cex = 0.7)
+
+#Summary of PCA
+summary(devil_pca)
+
+```
+```{r Outliers}
+
+#Plot outliers
+library(geomorph)
+plotOutliers(devil_rawcoords)
+plotOutliers(devil_gpa$coords)
+
+
+```
+
