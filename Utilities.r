@@ -1,3 +1,4 @@
+## Test test more
 ## Hello Chloe I am testing this
 
 #######a little function to check whether landmarks have been placed correctly. When running this, a series of rgl windows will open, each with a plotRefToTarget with the specimen of number i and the comparison specimen. 
@@ -6,6 +7,8 @@
 
 #First_spec_to_view is first specimen to be compared to comparison spec, 
 
+
+## Try this in here. TEST TEST
 #Last_spec_to_view is last specimen to be compared to comparison spec,
 
 #Number_of_comparison_spec is the specimen all the other specimens are to be compared to, obviously this needs to be 100% correct. It can be a specimen of a particular number or the number of the specimen closest to the mean 
